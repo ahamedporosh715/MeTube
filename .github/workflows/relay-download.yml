@@ -84,7 +84,8 @@ jobs:
           git config user.name "arena-relay[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           cp "${{ runner.temp }}/relay-status.txt" relay-status.txt
-          if [ -f Metube.zip ] && head -c4 Metube.zip | od -An -tx1 | grep -q "504b 0304" && unzip -tq Metube.zip > /dev/null 2>&1; then
+          is_zip() { [ -s "$1" ] && [ "$(head -c4 "$1" | od -An -tx1 | tr -d ' \n')" = "504b0304" ]; }
+          if is_zip Metube.zip && unzip -tq Metube.zip > /dev/null 2>&1; then
             sha=$(sha256sum Metube.zip | cut -d' ' -f1)
             size=$(stat -c%s Metube.zip)
             git add Metube.zip relay-status.txt
