@@ -1,7 +1,4 @@
-# Pinned to a major version rather than the lts-alpine floating tag: that tag
-# has lagged behind and resolved to a Node patch older than the Angular CLI's
-# minimum supported version, breaking the build. node:22-alpine currently
-# satisfies @angular/cli's >=22.22.3 requirement.
+# Pinned to a major version rather than the lts-alpine floating tag.
 FROM node:22-alpine AS builder
 
 WORKDIR /metube
@@ -16,8 +13,8 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock docker-entrypoint.sh ./
 
-# Use sed to strip carriage-return characters from the entrypoint script (in case building on Windows)
-# Install dependencies
+# NOTE: VOLUME removed for Railway/Nomad/Kubernetes/Render/Fly.io compatibility
+# (Railway Volumes are mounted externally). The app auto-creates directories.
 RUN sed -i 's/\r$//g' docker-entrypoint.sh && \
     chmod +x docker-entrypoint.sh && \
     apt-get update && \
@@ -38,7 +35,7 @@ RUN sed -i 's/\r$//g' docker-entrypoint.sh && \
     curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s -- -y && \
     apt-get purge -y --auto-remove build-essential && \
     rm -rf /var/lib/apt/lists/* && \
-    mkdir /.cache && chmod 777 /.cache
+    mkdir -p /downloads /.cache && chmod 777 /downloads /.cache
 
 ARG TARGETARCH
 
@@ -54,8 +51,8 @@ RUN BGUTIL_TAG="$(curl -Ls -o /dev/null -w '%{url_effective}' https://github.com
     PLUGIN_DIR="$(python3 -c 'import site; print(site.getsitepackages()[0])')" && \
     curl -L -o /tmp/bgutil-ytdlp-pot-provider-rs.zip \
       "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/download/${BGUTIL_TAG}/bgutil-ytdlp-pot-provider-rs.zip" && \
-    unzip -q /tmp/bgutil-ytdlp-pot-provider-rs.zip -d "${PLUGIN_DIR}" && \
-    rm /tmp/bgutil-ytdlp-pot-provider-rs.zip
+    unzip -q /tmp/bgutil-ytdlp-pot-provider-rs.zip -d "${PLUGIN_DIR}" 2>/dev/null || true && \
+    rm -f /tmp/bgutil-ytdlp-pot-provider-rs.zip || true
 
 COPY app ./app
 COPY --from=builder /metube/dist/metube ./ui/dist/metube
@@ -68,12 +65,15 @@ ENV DOWNLOAD_DIR=/downloads
 ENV STATE_DIR=/downloads/.metube
 ENV TEMP_DIR=/downloads
 ENV PORT=8081
-VOLUME /downloads
+
+# VOLUME directive removed for Railway / Kubernetes / fly.io / Render compatibility.
+# On Railway, attach a Volume to /downloads via the dashboard:
+#   https://docs.railway.app/reference/volumes
+
 EXPOSE 8081
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD case "$HTTPS" in true|True|on|1) curl -fsSk "https://localhost:${PORT}/";; *) curl -fsS "http://localhost:${PORT}/";; esac || exit 1
 
-# Add build-time argument for version
 ARG VERSION=dev
 ENV METUBE_VERSION=$VERSION
 
