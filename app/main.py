@@ -22,9 +22,13 @@ from watchfiles import DefaultFilter, Change, awatch
 
 import bg_tasks
 import yt_search
+import music_library
+import ytmusic_search
 from ytdl import DownloadQueueNotifier, DownloadQueue, Download
 from subscriptions import SubscriptionManager, SubscriptionNotifier, SubscriptionInfo, coerce_optional_bool
 from yt_dlp.version import __version__ as yt_dlp_version
+
+from urllib.parse import quote as url_quote
 
 log = logging.getLogger('main')
 
@@ -1249,6 +1253,91 @@ async def trending(request):
         return web.Response(text=serializer.encode({'status': 'error', 'msg': 'Trending failed'}))
     log.info("Trending: %d results", len(results))
     return web.Response(text=serializer.encode({'status': 'ok', 'results': results}))
+
+
+# -------- Music Library (local audio files) --------
+
+@routes.get(config.URL_PREFIX + 'music/library')
+async def music_library_list(request):
+    """List all audio files in AUDIO_DOWNLOAD_DIR with metadata."""
+    try:
+        items = await asyncio.get_running_loop().run_in_executor(
+            None, lambda: music_library.list_audio_files(config.AUDIO_DOWNLOAD_DIR))
+    except Exception:
+        log.exception('Failed to list audio library')
+        return web.Response(text=serializer.encode({'status': 'error', 'msg': 'Failed to scan library'}))
+    audio_base = config.PUBLIC_HOST_AUDIO_URL or (config.URL_PREFIX + 'audio_download/')
+    art_prefix = config.URL_PREFIX + 'music/art/'
+    for it in items:
+        rel_encoded = url_quote(it['relpath'])
+        it['url'] = audio_base + rel_encoded
+        it['art_url'] = (art_prefix + rel_encoded) if it.get('has_art') else ''
+    return web.Response(text=serializer.encode({'status': 'ok', 'items': items}))
+
+
+@routes.get(config.URL_PREFIX + 'music/art/{relpath:.+}')
+async def music_art(request):
+    """Serve embedded cover art for a local audio file."""
+    rel = request.match_info['relpath']
+    candidate = music_library._safe_join(config.AUDIO_DOWNLOAD_DIR, rel)
+    if candidate is None or not candidate.is_file():
+        raise web.HTTPNotFound()
+    art = await asyncio.get_running_loop().run_in_executor(
+        None, lambda: music_library.extract_cover_art(candidate))
+    if art is None:
+        raise web.HTTPNotFound()
+    data, mime = art
+    return web.Response(body=data, content_type=mime, headers={
+        'Cache-Control': 'max-age=86400, public',
+    })
+
+
+# -------- YouTube Music search / stream proxy --------
+
+@routes.get(config.URL_PREFIX + 'music/ytsearch')
+async def music_ytsearch(request):
+    """Search YouTube Music via ytmusicapi."""
+    query = (request.query.get('q') or '').strip()
+    filter_name = (request.query.get('filter') or 'songs').strip().lower()
+    try:
+        limit = int(request.query.get('limit', 20))
+    except (TypeError, ValueError):
+        limit = 20
+    if not query:
+        raise web.HTTPBadRequest(reason="missing 'q' (search query)")
+    if len(query) > 200:
+        raise web.HTTPBadRequest(reason="'q' must be at most 200 characters")
+    try:
+        results = await asyncio.get_running_loop().run_in_executor(
+            None, lambda: ytmusic_search.search(query, filter_name, limit))
+    except ytmusic_search.YTMusicError as e:
+        log.warning("YT Music search failed for %r: %s", query, e)
+        return web.Response(text=serializer.encode({'status': 'error', 'msg': str(e)}))
+    except ValueError as e:
+        raise web.HTTPBadRequest(reason=str(e))
+    except Exception:
+        log.exception("YT Music search crashed for %r", query)
+        return web.Response(text=serializer.encode({'status': 'error', 'msg': 'Search failed'}))
+    return web.Response(text=serializer.encode({
+        'status': 'ok', 'query': query, 'filter': filter_name, 'results': results}))
+
+
+@routes.get(config.URL_PREFIX + 'music/ytstream/{video_id}')
+async def music_ytstream(request):
+    """Proxy a YouTube Music audio stream (302-redirect to signed Google URL)."""
+    video_id = request.match_info['video_id']
+    if not re.fullmatch(r'[A-Za-z0-9_\-]{6,20}', video_id or ''):
+        raise web.HTTPBadRequest(reason='invalid video_id')
+    try:
+        info = await asyncio.get_running_loop().run_in_executor(
+            None, lambda: ytmusic_search.get_stream_url(video_id))
+    except ytmusic_search.YTMusicError as e:
+        return web.Response(text=serializer.encode({'status': 'error', 'msg': str(e)}), status=404)
+    except Exception:
+        log.exception('ytstream failed')
+        return web.Response(text=serializer.encode({'status': 'error', 'msg': 'Stream unavailable'}), status=500)
+    raise web.HTTPFound(info['url'])
+
 
 def _lite_file(name):
     return os.path.join(config.BASE_DIR, 'app', 'static', 'lite', name)
