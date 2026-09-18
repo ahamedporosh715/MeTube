@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeTube Lite</title>
+<link rel="stylesheet" href="lite.css">
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">MeTube Lite</span>
+  <span class="topnav">
+    <a href="#add">Add</a>
+    <a href="#search">Search</a>
+    <a href="#trending">Trending</a>
+    <a href="#queue">Downloads</a>
+    <a href="../">Full UI</a>
+  </span>
+  <div class="clear"></div>
+</div>
+<div class="wrap">
+  <div id="msg" class="msg hidden"></div>
+
+  <div class="card" id="add">
+    <h2>Add URL</h2>
+    <input id="addUrl" type="url" placeholder="Paste video / playlist / channel URL...">
+    <div class="row">
+      <select id="addType">
+        <option value="video">Video</option>
+        <option value="audio">Audio</option>
+      </select>
+      <select id="addQuality">
+        <option value="best">Best quality</option>
+        <option value="1080">1080p</option>
+        <option value="720">720p</option>
+        <option value="480">480p</option>
+      </select>
+      <select id="addFormat"></select>
+      <button id="addBtn">Download</button>
+    </div>
+  </div>
+
+  <div class="card" id="search">
+    <h2>Search YouTube</h2>
+    <input id="q" type="search" placeholder="Search videos, channels, playlists...">
+    <div class="row">
+      <button class="tab on" data-t="video">Videos</button>
+      <button class="tab" data-t="channel">Channels</button>
+      <button class="tab" data-t="playlist">Playlists</button>
+      <button id="searchBtn">Search</button>
+    </div>
+    <div id="history" class="history"></div>
+    <div id="results" class="results"></div>
+  </div>
+
+  <div class="card" id="trending">
+    <h2>Trending <button id="trendingBtn" class="small">Refresh</button></h2>
+    <div id="trendingResults" class="results"><p class="dim">Loading...</p></div>
+  </div>
+
+  <div class="card" id="queue">
+    <h2>Downloads
+      <button id="refreshBtn" class="small">Refresh</button>
+      <label class="auto"><input type="checkbox" id="autoRef" checked> auto-refresh</label>
+    </h2>
+    <h3>Queue</h3>
+    <div id="queueList"><p class="dim">Loading...</p></div>
+    <h3>Completed</h3>
+    <div id="doneList"><p class="dim">Loading...</p></div>
+  </div>
+
+  <p class="dim foot">MeTube Lite: works on old browsers. <a href="../">Open full UI</a></p>
+</div>
+<script src="lite.js"></script>
+</body>
+</html>
