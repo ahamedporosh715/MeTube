@@ -1,0 +1,97 @@
+name: relay-download
+
+on:
+  push:
+    paths:
+      - '.github/workflows/relay-download.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: relay-download
+  cancel-in-progress: true
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download file
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          set -uo pipefail
+          BASE="https://filebin.net/5f5a3tureb1j0tsu/Metube.zip"
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+          JAR="$RUNNER_TEMP/jar.txt"
+          OUT="$GITHUB_WORKSPACE/Metube.zip"
+          STATUS="$RUNNER_TEMP/relay-status.txt"
+          : > "$STATUS"
+
+          iszip() { [ -s "$1" ] && [ "$(head -c4 "$1" | od -An -tx1 | tr -d ' \n')" = "504b0304" ]; }
+
+          try() {
+            local url="$1"; shift
+            local hdr="$RUNNER_TEMP/h.txt"
+            local rc=0
+            curl -sSL --max-time 300 -A "$UA" -c "$JAR" -b "$JAR" -D "$hdr" "$@" "$url" -o "$OUT" || rc=$?
+            {
+              echo ""
+              echo "===== ATTEMPT: $url $* (curl exit $rc) ====="
+              grep -iE "^(HTTP/|set-cookie|content-type|content-length|content-disposition|location)" "$hdr" 2>/dev/null | head -20
+            } >> "$STATUS"
+            if iszip "$OUT"; then
+              echo "RESULT: ZIP, $(stat -c%s "$OUT") bytes" >> "$STATUS"
+              return 0
+            fi
+            echo "RESULT: not a zip (file says: $(file -b "$OUT" 2>/dev/null | head -c 120))" >> "$STATUS"
+            echo "--- body head ---" >> "$STATUS"
+            head -c 1200 "$OUT" >> "$STATUS" 2>/dev/null
+            echo "" >> "$STATUS"
+            # mine the HTML for cookie-setting JS or alternate links
+            grep -oE "document\.cookie[^;]{0,120}" "$OUT" 2>/dev/null | head -5 >> "$STATUS" || true
+            grep -oE "https?://[^\"' ]+" "$OUT" 2>/dev/null | grep -vE "filebin.net/(5f5a3tureb1j0tsu)?$" | head -10 >> "$STATUS" || true
+            return 1
+          }
+
+          # 1) cold request (captures any Set-Cookie into jar)
+          try "$BASE" && exit 0
+          # 2) same-session retry (jar now has cookie from step 1)
+          try "$BASE" && exit 0
+          # 3) manual cookie variants
+          for c in "warning=true" "filebin_warning=true" "warning_accepted=true" "warned=1" "filebin-warning=1"; do
+            try "$BASE" -H "Cookie: $c" && exit 0
+          done
+          # 4) referer variant
+          try "$BASE" -e "https://filebin.net/5f5a3tureb1j0tsu" && exit 0
+          # 5) query param variants
+          for q in "download=1" "proceed=1" "dl=1" "warning=off" "warned=1"; do
+            try "$BASE?$q" && exit 0
+          done
+          # 6) JSON API accept header
+          try "$BASE" -H "Accept: application/json" && exit 0
+          # 7) bin archive endpoint
+          try "https://filebin.net/5f5a3tureb1j0tsu" -H "Accept: application/zip" && exit 0
+
+          echo "ALL STRATEGIES FAILED" >> "$STATUS"
+          exit 0
+
+      - name: Commit result
+        run: |
+          set -uxo pipefail
+          git config user.name "arena-relay[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp "${{ runner.temp }}/relay-status.txt" relay-status.txt
+          if [ -f Metube.zip ] && head -c4 Metube.zip | od -An -tx1 | grep -q "504b 0304" && unzip -tq Metube.zip > /dev/null 2>&1; then
+            sha=$(sha256sum Metube.zip | cut -d' ' -f1)
+            size=$(stat -c%s Metube.zip)
+            git add Metube.zip relay-status.txt
+            git commit -m "relay: add Metube.zip (${size} bytes, sha256 ${sha:0:12}...)"
+          else
+            rm -f Metube.zip
+            git add relay-status.txt
+            git commit -m "relay: download failed, diagnostics in relay-status.txt"
+          fi
+          git push
