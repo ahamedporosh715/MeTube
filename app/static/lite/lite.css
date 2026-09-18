@@ -1,0 +1,46 @@
+/* MeTube Lite: plain CSS for old browsers. */
+body { margin: 0; padding: 0; background: #f2f2f2; color: #222; font-family: Arial, Helvetica, sans-serif; font-size: 15px; }
+.topbar { background: #202020; color: #fff; padding: 10px 14px; }
+.topbar .brand { font-weight: bold; font-size: 18px; }
+.topnav { float: right; }
+.topnav a { color: #8ab4f8; margin-left: 12px; text-decoration: none; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 12px; }
+.card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 14px; margin-bottom: 14px; }
+.card h2 { margin: 0 0 10px; font-size: 20px; font-weight: normal; }
+.card h3 { margin: 12px 0 6px; font-size: 16px; }
+input[type="text"], input[type="url"], input[type="search"], select { padding: 8px; font-size: 15px; border: 1px solid #bbb; border-radius: 4px; width: 100%; box-sizing: border-box; }
+.row { margin-top: 8px; }
+#add .row select { width: auto; }
+button { padding: 8px 14px; font-size: 14px; border: 1px solid #999; border-radius: 4px; background: #e8e8e8; cursor: pointer; }
+button:hover { background: #dcdcdc; }
+#searchBtn, #addBtn { background: #0b57d0; border-color: #0b57d0; color: #fff; }
+.tab { margin-right: 6px; }
+.tab.on { background: #0b57d0; border-color: #0b57d0; color: #fff; }
+.small { padding: 4px 10px; font-size: 13px; }
+.msg { padding: 10px 12px; border-radius: 4px; margin-bottom: 12px; }
+.msg.ok { background: #dff0d8; border: 1px solid #a3d39c; }
+.msg.err { background: #f2dede; border: 1px solid #dca7a7; }
+.hidden { display: none; }
+.dim { color: #777; }
+.foot { text-align: center; }
+.history { margin-top: 8px; }
+.hist-label { color: #777; font-size: 13px; }
+.chip { margin: 2px 4px 2px 0; padding: 4px 10px; font-size: 13px; }
+.chip.clear { background: #fff; }
+.results { margin-top: 10px; }
+.rowitem { border-top: 1px solid #eee; padding: 10px 0; }
+.thumb { float: left; width: 160px; height: 90px; line-height: 90px; text-align: center; background: #111; color: #fff; text-decoration: none; position: relative; margin-right: 12px; }
+.thumb img { max-width: 160px; max-height: 90px; vertical-align: middle; }
+.noimg { font-size: 12px; color: #aaa; }
+.badge { position: absolute; right: 4px; bottom: 4px; background: #000; color: #fff; font-size: 12px; padding: 1px 5px; border-radius: 3px; line-height: normal; }
+.badge.live { background: #c00; font-weight: bold; }
+.rbody { overflow: hidden; }
+.rtitle { font-weight: bold; color: #0b57d0; text-decoration: none; }
+.rmeta { color: #666; font-size: 13px; margin: 4px 0; }
+.rbtns button { margin-right: 6px; padding: 5px 12px; font-size: 13px; }
+.rbtns a { font-size: 13px; }
+.clear { clear: both; }
+.dl { border-top: 1px solid #eee; padding: 6px 0; }
+.dltitle { font-weight: bold; }
+.dl button { margin-left: 8px; }
+.auto { font-size: 13px; font-weight: normal; margin-left: 8px; }

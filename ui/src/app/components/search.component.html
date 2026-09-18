@@ -1,0 +1,127 @@
+<div class="yt-search">
+  <h2 class="yt-search-title">
+    <fa-icon [icon]="faMagnifyingGlass" />
+    Search YouTube
+  </h2>
+
+  <form (ngSubmit)="search()" class="yt-search-bar">
+    <div class="input-group">
+      <input type="search" class="form-control" placeholder="Search videos, channels, playlists…"
+        [(ngModel)]="query" name="q" [disabled]="searching"
+        aria-label="Search YouTube" autocomplete="off" />
+      <button type="submit" class="btn btn-primary" [disabled]="searching || !query.trim()">
+        @if (searching) {
+          <fa-icon [icon]="faSpinner" />
+        } @else {
+          <fa-icon [icon]="faMagnifyingGlass" />
+        }
+        <span class="d-none d-sm-inline ms-1">Search</span>
+      </button>
+    </div>
+  </form>
+
+  <ul class="nav nav-pills yt-search-tabs" role="tablist" aria-label="Search type">
+    @for (tab of tabs; track tab.id) {
+      <li class="nav-item" role="presentation">
+        <button type="button" class="nav-link" role="tab"
+          [class.active]="activeTab === tab.id"
+          [attr.aria-selected]="activeTab === tab.id"
+          [disabled]="searching"
+          (click)="selectTab(tab.id)">
+          @switch (tab.id) {
+            @case ('video') { <fa-icon [icon]="faCirclePlay" /> }
+            @case ('channel') { <fa-icon [icon]="faTowerBroadcast" /> }
+            @case ('playlist') { <fa-icon [icon]="faListUl" /> }
+            @case ('trending') { <fa-icon [icon]="faFire" /> }
+          }
+          {{ tab.label }}
+        </button>
+      </li>
+    }
+  </ul>
+
+  @if (activeTab !== 'trending' && history.length > 0) {
+    <div class="yt-search-history">
+      <span class="yt-search-history-label">Recent:</span>
+      @for (h of history; track trackHistory($index, h)) {
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectHistory(h)">
+          {{ h.q }}
+        </button>
+      }
+      <button type="button" class="btn btn-sm btn-link" (click)="clearHistory()">Clear</button>
+    </div>
+  }
+
+  @if (searching) {
+    <div class="yt-search-status" role="status">
+      <fa-icon [icon]="faSpinner" size="2x" />
+      <p>Searching…</p>
+    </div>
+  } @else if (searched && results.length === 0) {
+    <div class="yt-search-status">
+      <p class="text-muted">No results found. Try different keywords.</p>
+    </div>
+  } @else {
+    <div class="yt-search-grid">
+      @for (r of results; track trackById($index, r)) {
+        <article class="yt-search-card">
+          <a [href]="r.url" target="_blank" rel="noopener" class="yt-search-thumb"
+            [attr.aria-label]="r.title">
+            @if (r.thumbnail) {
+              <img [src]="r.thumbnail" [alt]="r.title" loading="lazy" />
+            } @else {
+              <span class="yt-search-thumb-fallback">
+                <fa-icon [icon]="faCirclePlay" size="2x" />
+              </span>
+            }
+            @if (r.is_live) {
+              <span class="yt-search-badge yt-search-live">LIVE</span>
+            } @else if (r.duration_string) {
+              <span class="yt-search-badge">{{ r.duration_string }}</span>
+            } @else if (r.video_count) {
+              <span class="yt-search-badge">{{ r.video_count }} videos</span>
+            }
+          </a>
+          <div class="yt-search-body">
+            <h3 class="yt-search-card-title" [title]="r.title">{{ r.title }}</h3>
+            <p class="yt-search-meta">
+              @if (activeTab === 'channel') {
+                {{ r.handle || r.uploader }}
+                @if (r.verified) {
+                  <fa-icon [icon]="faCircleCheck" class="text-muted" />
+                }
+                @if (r.subscriber_count) {
+                  • {{ formatCount(r.subscriber_count) }} subscribers
+                }
+              } @else if (activeTab === 'playlist') {
+                {{ r.channel || r.uploader }}
+                @if (r.video_count) {
+                  • {{ r.video_count }} videos
+                }
+              } @else {
+                {{ r.uploader }}
+                @if (r.view_count) {
+                  • {{ formatCount(r.view_count) }} views
+                }
+              }
+            </p>
+            <div class="yt-search-actions">
+              <button type="button" class="btn btn-sm btn-primary" (click)="download(r)"
+                title="Download with current settings">
+                <fa-icon [icon]="faDownload" /> Download
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="mp3(r)"
+                title="Download as MP3">
+                <fa-icon [icon]="faDownload" /> MP3
+              </button>
+              <a [href]="r.url" target="_blank" rel="noopener" class="btn btn-sm btn-link"
+                [attr.aria-label]="'Open ' + r.title + ' on YouTube'">
+                <fa-icon [icon]="faExternalLinkAlt" />
+              </a>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
