@@ -2,7 +2,7 @@
 ===== ATTEMPT: https://filebin.net/5f5a3tureb1j0tsu/Metube.zip  (curl exit 0) =====
 HTTP/1.1 200 OK
 Content-Type: text/html; charset=utf-8
-Set-Cookie: verified=2024-05-24; Path=/; Expires=Sun, 18 Oct 2026 14:06:49 GMT; HttpOnly; Secure
+Set-Cookie: verified=2024-05-24; Path=/; Expires=Sun, 18 Oct 2026 14:08:07 GMT; HttpOnly; Secure
 RESULT: not a zip (file says: HTML document, ASCII text, with very long lines (323))
 --- body head ---
 <!doctype html>
@@ -50,7 +50,7 @@ https://filebin.net/5f5a3tureb1j0tsu/Metube.zip
 
 ===== ATTEMPT: https://filebin.net/5f5a3tureb1j0tsu/Metube.zip  (curl exit 0) =====
 HTTP/1.1 302 Found
-Location: https://storage.filebin.net/filebin/8067944b175e0a0904fdb77c64ff649ed8536b100d23c0ed58a8f0b0d2ecda91?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=GK352fd2505074fc9dde7fd2cb%2F20260918%2Fhel1-dc4%2Fs3%2Faws4_request&X-Amz-Date=20260918T140650Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&response-cache-control=max-age%3D900&response-content-disposition=inline%3B%20filename%3D%22Metube.zip%22&response-content-type=application%2Fzip&x-id=GetObject&X-Amz-Signature=f331e02f92b4af0423a20954451fd87b7934cd2701f2f8cb7bcd05583aee8bb2
+Location: https://storage.filebin.net/filebin/8067944b175e0a0904fdb77c64ff649ed8536b100d23c0ed58a8f0b0d2ecda91?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=GK352fd2505074fc9dde7fd2cb%2F20260918%2Fhel1-dc4%2Fs3%2Faws4_request&X-Amz-Date=20260918T140807Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&response-cache-control=max-age%3D900&response-content-disposition=inline%3B%20filename%3D%22Metube.zip%22&response-content-type=application%2Fzip&x-id=GetObject&X-Amz-Signature=2b25efa1a971c70a7b1bc1994c962fbaf4b9c65eba0bfcefb317d2d21bca5c92
 Content-Length: 0
 HTTP/1.1 200 OK
 Content-Disposition: inline; filename="Metube.zip"
