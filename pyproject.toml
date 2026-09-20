@@ -10,6 +10,7 @@ dependencies = [
     "mutagen",
     "curl-cffi",
     "watchfiles",
+    "ytmusicapi>=1.0",
 ]
 
 [dependency-groups]

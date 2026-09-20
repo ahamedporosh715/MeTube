@@ -638,6 +638,8 @@
     (downloadRequested)="addDownload({url: $event})"
     (downloadMp3Requested)="addDownload({url: $event, downloadType: 'audio', format: 'mp3', quality: 'best'})" />
 
+  <app-music-library />
+
   <!-- Batch Import Modal -->
   <div class="modal fade" tabindex="-1" role="dialog"
   aria-modal="true"
@@ -884,6 +886,9 @@
                 <div class="d-flex">
                   @if (entry[1].status === 'error') {
                     <button type="button" class="btn btn-link" [attr.aria-label]="'Retry download for ' + entry[1].title" (click)="retryDownload(entry[0], entry[1])"><fa-icon [icon]="faRedoAlt" /></button>
+                  }
+                  @if (entry[1].filename && canPlayAudio(entry[1])) {
+                    <button type="button" class="btn btn-link text-success" (click)="playAudioDownload(entry[1])" [attr.aria-label]="'Play ' + entry[1].title" title="Play"><fa-icon [icon]="faPlay" /></button>
                   }
                   @if (entry[1].filename) {
                     <a href="{{buildDownloadLink(entry[1])}}" download class="btn btn-link" [attr.aria-label]="'Download result file for ' + entry[1].title"><fa-icon [icon]="faDownload" /></a>
@@ -1146,3 +1151,4 @@
 </footer>
 
 <app-toast-container />
+<app-music-player />

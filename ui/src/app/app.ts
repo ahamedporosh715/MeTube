@@ -7,7 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { faTrashAlt, faCheckCircle, faTimesCircle, faRedoAlt, faSun, faMoon, faCheck, faCircleHalfStroke, faDownload, faExternalLinkAlt, faFileImport, faFileExport, faCopy, faClock, faTachometerAlt, faSortAmountDown, faSortAmountUp, faChevronRight, faChevronDown, faUpload, faPause, faPlay, faShareNodes } from '@fortawesome/free-solid-svg-icons';
+import { faTrashAlt, faCheckCircle, faTimesCircle, faRedoAlt, faSun, faMoon, faCheck, faCircleHalfStroke, faDownload, faExternalLinkAlt, faFileImport, faFileExport, faCopy, faClock, faTachometerAlt, faSortAmountDown, faSortAmountUp, faChevronRight, faChevronDown, faUpload, faPause, faPlay, faShareNodes, faMusic } from '@fortawesome/free-solid-svg-icons';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { AddDownloadPayload, DownloadsService } from './services/downloads.service';
@@ -15,6 +15,7 @@ import { MeTubeSocket } from './services/metube-socket.service';
 import { SubscriptionsService } from './services/subscriptions.service';
 import { ToastService } from './services/toast.service';
 import { BatchUrlsService, BatchUrlFilter } from './services/batch-urls.service';
+import { MusicPlayerService } from './services/music-player.service';
 import { SubscriptionRow } from './interfaces/subscription';
 import { Themes } from './theme';
 import {
@@ -34,7 +35,7 @@ import {
   State,
 } from './interfaces';
 import { EtaPipe, SpeedPipe, FileSizePipe } from './pipes';
-import { SelectAllCheckboxComponent, ItemCheckboxComponent, ToastContainerComponent } from './components/';
+import { SelectAllCheckboxComponent, ItemCheckboxComponent, ToastContainerComponent, MusicPlayerComponent, MusicLibraryComponent } from './components/';
 import { SearchComponent } from './components/search.component';
 
 @Component({
@@ -55,6 +56,8 @@ import { SearchComponent } from './components/search.component';
         ItemCheckboxComponent,
         ToastContainerComponent,
         SearchComponent,
+        MusicLibraryComponent,
+        MusicPlayerComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.sass',
@@ -62,6 +65,7 @@ import { SearchComponent } from './components/search.component';
 export class App implements AfterViewInit, OnInit, OnDestroy {
   downloads = inject(DownloadsService);
   subscriptionsSvc = inject(SubscriptionsService);
+  player = inject(MusicPlayerService);
   private toasts = inject(ToastService);
   private batchUrls = inject(BatchUrlsService);
   private socket = inject(MeTubeSocket);
@@ -207,6 +211,7 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
   faPause = faPause;
   faPlay = faPlay;
   faShareNodes = faShareNodes;
+  faMusic = faMusic;
   subtitleLanguages = [
     { id: 'en', text: 'English' },
     { id: 'ar', text: 'Arabic' },
@@ -1717,6 +1722,15 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
+  canPlayAudio(download: Download): boolean {
+    if (download.download_type !== 'audio' || download.status !== 'finished' || !download.filename) return false;
+    const fn = download.filename.toLowerCase();
+    return ['.mp3','.m4a','.ogg','.opus','.flac','.wav','.aac','.webm','.mka'].some((e) => fn.endsWith(e));
+  }
+  playAudioDownload(download: Download): void {
+    if (!this.canPlayAudio(download)) return;
+    this.player.playUrl(this.buildDownloadLink(download), download.title || download.filename);
+  }
   private updateMetrics() {
     let active = 0;
     let queued = 0;
